@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">FragmentWithViewPager</string>
+    <string name="tv_message_title">信息</string>
+    <string name="tv_contacts_title">联系人</string>
+    <string name="tv_dialer_title">拨号</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="page_fragment_text">this is page text</string>
+</resources>
