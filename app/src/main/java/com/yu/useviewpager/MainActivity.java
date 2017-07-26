@@ -22,6 +22,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private List<PageFragment> mViews;
     private String[] mTitles = {"拨号","联系人","信息"};
+    private int[] mColors = {R.color.colorAccent,R.color.colorPrimary,R.color.colorPrimaryDark};
     private TextView tvDialer,tvContacts,tvMsg;
     PagerAdapter adapter;
     ViewPager pager;
@@ -37,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         FragmentPageChangerListener listener = new FragmentPageChangerListener();
         pager.addOnPageChangeListener(listener);
         pager.setAdapter(adapter);
-
+        pager.setPageTransformer(true, new DepthPageTransformer());
     }
 
     private void initViews() {
@@ -52,9 +53,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initDatas() {
         mViews = new ArrayList<>();
-        PageFragment fragment;
+//        PageFragment fragment;
         for (int i=0;i<mTitles.length;i++) {
-            fragment = PageFragment.newInstance(mTitles[i]);
+            PageFragment fragment = PageFragment.newInstance(mTitles[i],mColors[i]);
             mViews.add(fragment);
         }
 
@@ -130,6 +131,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case 2:
                 tvMsg.setTextColor(Color.parseColor("#6677ff"));
                 break;
+        }
+    }
+
+    public class DepthPageTransformer implements ViewPager.PageTransformer {
+        private static final float MIN_SCALE = 0.75f;
+
+        public void transformPage(View view, float position) {
+            int pageWidth = view.getWidth();
+
+            if (position < -1) { // [-Infinity,-1)
+                // This page is way off-screen to the left.
+                view.setAlpha(0);
+
+            } else if (position <= 0) { // [-1,0]
+                // Use the default slide transition when moving to the left page
+                view.setAlpha(1);
+                view.setTranslationX(0);
+                view.setScaleX(1);
+                view.setScaleY(1);
+
+            } else if (position <= 1) { // (0,1]
+                // Fade the page out.
+                view.setAlpha(1 - position);
+
+                // Counteract the default slide transition
+                view.setTranslationX(pageWidth * -position);
+
+                // Scale the page down (between MIN_SCALE and 1)
+                float scaleFactor = MIN_SCALE
+                        + (1 - MIN_SCALE) * (1 - Math.abs(position));
+                view.setScaleX(scaleFactor);
+                view.setScaleY(scaleFactor);
+
+            } else { // (1,+Infinity]
+                // This page is way off-screen to the right.
+                view.setAlpha(0);
+            }
         }
     }
 }
