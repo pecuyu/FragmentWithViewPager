@@ -9,8 +9,11 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+
+import com.nineoldandroids.view.ViewHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         FragmentPageChangerListener listener = new FragmentPageChangerListener();
         pager.addOnPageChangeListener(listener);
         pager.setAdapter(adapter);
-        pager.setPageTransformer(true, new DepthPageTransformer());
+        pager.setPageTransformer(true, new RotateDownPageTransformer());
     }
 
     private void initViews() {
@@ -134,10 +137,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * ViewPager切换动画设置原理
+     *  根据view切换时的position（旋转百分比），设置view的各种属性值
+     *  position记录的是当前view和即将显示的view的旋转占比值
+     *  以向左滑威为例：可以划分position区间
+     *   position < -1 旋转到左边，完全不可见
+     *   -1 <= position <= 0 将要向左旋转出去的view
+     *   0 < position < 1 将要从右显示的view
+     *   position >1 完全不可见
+     */
+
+    /**
+     * ViewPager切换动画
+     */
     public class DepthPageTransformer implements ViewPager.PageTransformer {
         private static final float MIN_SCALE = 0.75f;
 
         public void transformPage(View view, float position) {
+            Log.e("DepthPageTransformer ->", "view:"+view+"position:" + position);
             int pageWidth = view.getWidth();
 
             if (position < -1) { // [-Infinity,-1)
@@ -167,6 +185,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else { // (1,+Infinity]
                 // This page is way off-screen to the right.
                 view.setAlpha(0);
+            }
+        }
+    }
+
+    public class RotateDownPageTransformer implements ViewPager.PageTransformer
+    {
+
+        private static final float ROT_MAX = 20.0f;
+        private float mRot;
+
+        public void transformPage(View view, float position)
+        {
+
+            Log.e("TAG", view + " , " + position + "");
+
+            if (position < -1)
+            { // [-Infinity,-1)
+                // This page is way off-screen to the left.
+                ViewHelper.setRotation(view, 0);
+
+            } else if (position <= 1) // a页滑动至b页 ； a页从 0.0 ~ -1 ；b页从1 ~ 0.0
+            { // [-1,1]
+                // Modify the default slide transition to shrink the page as well
+                if (position < 0) {
+
+                    mRot = (ROT_MAX * position);
+                    ViewHelper.setPivotX(view, view.getMeasuredWidth() * 0.5f);
+                    ViewHelper.setPivotY(view, view.getMeasuredHeight());
+                    ViewHelper.setRotation(view, mRot);
+                } else {
+
+                    mRot = (ROT_MAX * position);
+                    ViewHelper.setPivotX(view, view.getMeasuredWidth() * 0.5f);
+                    ViewHelper.setPivotY(view, view.getMeasuredHeight());
+                    ViewHelper.setRotation(view, mRot);
+                }
+
+                // Scale the page down (between MIN_SCALE and 1)
+
+                // Fade the page relative to its size.
+
+            } else { // (1,+Infinity]
+                // This page is way off-screen to the right.
+                ViewHelper.setRotation(view, 0);
             }
         }
     }
