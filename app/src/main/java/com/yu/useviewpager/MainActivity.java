@@ -41,7 +41,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         FragmentPageChangerListener listener = new FragmentPageChangerListener();
         pager.addOnPageChangeListener(listener);
         pager.setAdapter(adapter);
-        pager.setPageTransformer(true, new RotateDownPageTransformer());
+//        pager.setPageTransformer(true, new RotateDownPageTransformer());
+        pager.setPageTransformer(true, new ZoomInAndOutPageTransformer());
     }
 
     private void initViews() {
@@ -189,6 +190,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * 旋转动画
+     */
     public class RotateDownPageTransformer implements ViewPager.PageTransformer
     {
 
@@ -229,6 +233,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else { // (1,+Infinity]
                 // This page is way off-screen to the right.
                 ViewHelper.setRotation(view, 0);
+            }
+        }
+    }
+
+    /**
+     * 缩放动画
+     */
+    public class ZoomInAndOutPageTransformer implements ViewPager.PageTransformer {
+
+        @Override
+        public void transformPage(View page, float position) {
+            if (position < -1) {
+                page.setScaleX(1);
+                page.setScaleY(1);
+            } else if (position < 1) {
+                if (position < 0) { //  [-1,0]
+                    page.setScaleX(0.5f*position + 1f); // 缩放：1 -->　0.5
+                    page.setScaleY(0.5f*position + 1f);
+                    page.setAlpha(0.5f*position + 1f);
+                } else {  // [0,1]
+                    page.setScaleX(1-position*0.5f ); // 缩放: 0.5 --> 1
+                    page.setScaleY(1-position*0.5f);
+                    page.setAlpha(1-position*0.5f);
+                }
+            } else {
+                page.setScaleX(1);
+                page.setScaleY(1);
             }
         }
     }
